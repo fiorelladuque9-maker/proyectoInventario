@@ -1,9 +1,7 @@
-from django.urls import path
-from . import views
+from rest_framework.routers import DefaultRouter
+from .views import CategoriaViewSet, ProductoViewSet
 
-urlpatterns =[
-    path("categorias/",views.categoria_api,name="categorias_api"),
-    path("categorias/<int:id>/",views.categoria_detalle_api,name="categorias_detalle_api"),
-    path("productos/",views.productos_api,name="productos_api"),
-    path("productos/<int:id>/",views.producto_detalle_api,name="producto_detalle_api"),
-]
+router = DefaultRouter()
+router.register("categorias", CategoriaViewSet)
+router.register("productos", ProductoViewSet)
+urlpatterns = router.urls
