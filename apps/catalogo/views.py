@@ -34,3 +34,6 @@ class ProductoViewSet(ModelViewSet):
     filterset_fields = ["categoria", "unidad", "activo"]
     search_fields = ["sku", "nombre", "descripcion"]
     ordering_fields = ["nombre", "sku", "stock_minimo", "creado_en"]
+
+"""pruebaas no seee que escribir  """
+
