@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
 from config.permissions import InventarioRolePermission
 from .models import ProductoProveedor, Proveedor
@@ -5,7 +6,7 @@ from .serializers import ProductoProveedorSerializer, ProveedorSerializer
 
 
 class ProveedorViewSet(ModelViewSet):
-    queryset = Proveedor.objects.prefetch_related("productos").all()
+    queryset = Proveedor.objects.annotate(cantidad_productos=Count("productos", distinct=True)).all()
     serializer_class = ProveedorSerializer
     permission_classes = [InventarioRolePermission]
     filterset_fields = ["activo"]
