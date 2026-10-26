@@ -3,9 +3,14 @@ from .models import ProductoProveedor, Proveedor
 
 
 class ProveedorSerializer(serializers.ModelSerializer):
+    cantidad_productos = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Proveedor
-        fields = "__all__"
+        fields = [
+            "id", "nombre", "identificacion", "correo", "telefono",
+            "activo", "productos", "cantidad_productos",
+        ]
 
 
 class ProductoProveedorSerializer(serializers.ModelSerializer):
