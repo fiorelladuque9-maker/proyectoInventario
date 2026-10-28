@@ -11,6 +11,7 @@ from .models import Almacen, Existencia, Movimiento
 from .serializers import AlmacenSerializer, ExistenciaSerializer, MovimientoSerializer
 
 
+# Los almacenes sí permiten CRUD normal, sujeto a los perfiles definidos.
 class AlmacenViewSet(ModelViewSet):
     queryset = Almacen.objects.all()
     serializer_class = AlmacenSerializer
@@ -20,6 +21,7 @@ class AlmacenViewSet(ModelViewSet):
     ordering_fields = ["nombre"]
 
 
+# El saldo se consulta aquí; se cambia mediante recepción, salida o conteo.
 class ExistenciaViewSet(ReadOnlyModelViewSet):
     queryset = Existencia.objects.select_related("producto", "almacen").all()
     serializer_class = ExistenciaSerializer
@@ -28,6 +30,7 @@ class ExistenciaViewSet(ReadOnlyModelViewSet):
     search_fields = ["producto__sku", "producto__nombre", "almacen__nombre"]
     ordering_fields = ["cantidad", "producto__nombre"]
 
+    # Compara el saldo con el mínimo configurado en cada producto.
     @action(detail=False, methods=["get"], url_path="bajo-minimo")
     def bajo_minimo(self, request):
         queryset = self.filter_queryset(self.get_queryset()).filter(
@@ -38,6 +41,7 @@ class ExistenciaViewSet(ReadOnlyModelViewSet):
         return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
 
 
+# Los movimientos son historial; las escrituras pasan por acciones controladas.
 class MovimientoViewSet(ReadOnlyModelViewSet):
     queryset = Movimiento.objects.select_related("producto", "almacen", "registrado_por").all()
     serializer_class = MovimientoSerializer
@@ -46,6 +50,7 @@ class MovimientoViewSet(ReadOnlyModelViewSet):
     search_fields = ["referencia", "producto__sku", "producto__nombre"]
     ordering_fields = ["creado_en", "cantidad"]
 
+    # Valida almacén, producto y cantidad antes de delegar el ajuste al servicio.
     @action(detail=False, methods=["post"], url_path="registrar-salida")
     def registrar_salida(self, request):
         from .services import registrar_movimiento

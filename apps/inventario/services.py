@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 from .models import Existencia, Movimiento
 
 
+# Si el saldo o el historial no se pueden guardar, la operación completa se revierte.
 @transaction.atomic
 def registrar_movimiento(*, almacen, producto, tipo, cantidad, usuario, referencia=""):
     """Registra un movimiento y mantiene la existencia en la misma transacción."""
@@ -14,8 +15,10 @@ def registrar_movimiento(*, almacen, producto, tipo, cantidad, usuario, referenc
         producto=producto,
         defaults={"cantidad": 0},
     )
+    # Bloquea el saldo mientras se calcula el nuevo valor y evita salidas simultáneas inválidas.
     existencia = Existencia.objects.select_for_update().get(pk=existencia.pk)
 
+    # Una salida nunca puede dejar el saldo por debajo de cero.
     if tipo == Movimiento.Tipo.SALIDA:
         if existencia.cantidad < cantidad:
             raise ValidationError({"cantidad": "No hay existencias suficientes para registrar esta salida."})
@@ -25,6 +28,7 @@ def registrar_movimiento(*, almacen, producto, tipo, cantidad, usuario, referenc
     else:
         raise ValidationError({"tipo": "Use entrada o salida para modificar existencias."})
 
+    # El saldo y el movimiento quedan guardados en la misma transacción.
     existencia.save(update_fields=["cantidad"])
     return Movimiento.objects.create(
         almacen=almacen,

@@ -12,6 +12,7 @@ from .models import ConteoInventario, LineaConteo
 from .serializers import ConteoInventarioSerializer, LineaConteoSerializer
 
 
+# El conjunto carga almacén y líneas relacionadas para preparar la respuesta del conteo.
 class ConteoInventarioViewSet(ModelViewSet):
     queryset = ConteoInventario.objects.select_related("almacen", "creado_por").prefetch_related("lineas__producto").all()
     serializer_class = ConteoInventarioSerializer
@@ -20,18 +21,22 @@ class ConteoInventarioViewSet(ModelViewSet):
     search_fields = ["almacen__nombre"]
     ordering_fields = ["creado_en", "cerrado_en"]
 
+    # El responsable del conteo se obtiene del usuario autenticado.
     def perform_create(self, serializer):
         serializer.save(creado_por=self.request.user)
 
+    # Cerrar valida todas las líneas y ajusta el inventario dentro de una transacción.
     @action(detail=True, methods=["post"])
     def cerrar(self, request, pk=None):
         with transaction.atomic():
+            # El bloqueo evita que dos solicitudes cierren el mismo conteo simultáneamente.
             conteo = ConteoInventario.objects.select_for_update().get(pk=pk)
             if conteo.estado != ConteoInventario.Estado.ABIERTO:
                 raise ValidationError({"estado": "El conteo ya está cerrado."})
             lineas = list(conteo.lineas.select_related("producto").all())
             if not lineas or any(linea.cantidad_contada is None for linea in lineas):
                 raise ValidationError({"lineas": "Todas las líneas deben tener una cantidad contada antes de cerrar."})
+            # La diferencia entre lo contado y lo registrado determina entrada o salida.
             for linea in lineas:
                 diferencia = linea.cantidad_contada - linea.cantidad_sistema
                 if diferencia == 0:
@@ -51,6 +56,7 @@ class ConteoInventarioViewSet(ModelViewSet):
         return Response(self.get_serializer(conteo).data, status=status.HTTP_200_OK)
 
 
+# Administra las líneas abiertas; el serializador impide editarlas tras el cierre.
 class LineaConteoViewSet(ModelViewSet):
     queryset = LineaConteo.objects.select_related("conteo", "producto").all()
     serializer_class = LineaConteoSerializer

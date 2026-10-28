@@ -11,6 +11,7 @@ from .models import LineaCompra, OrdenCompra
 from .serializers import LineaCompraSerializer, OrdenCompraSerializer
 
 
+# La consulta carga proveedor y líneas relacionadas para responder sin consultas repetidas.
 class OrdenCompraViewSet(ModelViewSet):
     queryset = OrdenCompra.objects.select_related("proveedor", "creada_por").prefetch_related("lineas__producto").all()
     serializer_class = OrdenCompraSerializer
@@ -19,9 +20,11 @@ class OrdenCompraViewSet(ModelViewSet):
     search_fields = ["proveedor__nombre", "notas"]
     ordering_fields = ["creada_en", "estado"]
 
+    # El usuario que crea la orden se toma del token, no del cuerpo enviado por el cliente.
     def perform_create(self, serializer):
         serializer.save(creada_por=self.request.user)
 
+    # Solo se envían órdenes en borrador que ya tienen al menos una línea.
     @action(detail=True, methods=["post"])
     def enviar(self, request, pk=None):
         orden = self.get_object()
@@ -33,9 +36,11 @@ class OrdenCompraViewSet(ModelViewSet):
         orden.save(update_fields=["estado"])
         return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
 
+    # Toda la recepción se confirma junta: si algo falla, se revierte la transacción.
     @action(detail=True, methods=["post"])
     def recibir(self, request, pk=None):
         with transaction.atomic():
+            # Bloquea la orden durante la recepción para impedir procesarla dos veces a la vez.
             orden = OrdenCompra.objects.select_for_update().get(pk=pk)
             if orden.estado != OrdenCompra.Estado.ENVIADA:
                 raise ValidationError({"estado": "Solo se puede recibir una orden enviada."})
@@ -46,6 +51,7 @@ class OrdenCompraViewSet(ModelViewSet):
             lineas = list(orden.lineas.select_related("producto").all())
             if not lineas:
                 raise ValidationError({"lineas": "La orden no tiene productos."})
+            # Cada línea recibida crea una entrada de inventario y queda marcada como recibida.
             for linea in lineas:
                 registrar_movimiento(
                     almacen=almacen,
@@ -63,6 +69,7 @@ class OrdenCompraViewSet(ModelViewSet):
         return Response(self.get_serializer(orden).data, status=status.HTTP_200_OK)
 
 
+# Expone las operaciones CRUD de las líneas de compra, sujetas a sus validaciones.
 class LineaCompraViewSet(ModelViewSet):
     queryset = LineaCompra.objects.select_related("orden", "producto").all()
     serializer_class = LineaCompraSerializer
