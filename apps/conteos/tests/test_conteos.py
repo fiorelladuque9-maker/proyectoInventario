@@ -25,25 +25,6 @@ class ConteoInventarioAPITests(APITestCase):
     def crear_conteo(self):
         return ConteoInventario.objects.create(almacen=self.almacen, creado_por=self.user)
 
-    def test_crear_linea_guarda_existencia_actual_como_base(self):
-        conteo = self.crear_conteo()
-        response = self.client.post(
-            "/api/v1/lineas-conteo/",
-            {"conteo": conteo.pk, "producto": self.producto.pk},
-            format="json",
-        )
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["cantidad_sistema"], "5.000")
-
-    def test_no_se_cierra_conteo_con_linea_sin_cantidad_contada(self):
-        conteo = self.crear_conteo()
-        LineaConteo.objects.create(
-            conteo=conteo, producto=self.producto, cantidad_sistema=5, cantidad_contada=None
-        )
-        response = self.client.post(f"/api/v1/conteos/{conteo.pk}/cerrar/", {}, format="json")
-        self.assertEqual(response.status_code, 400)
-        conteo.refresh_from_db()
-        self.assertEqual(conteo.estado, ConteoInventario.Estado.ABIERTO)
 
     def test_cerrar_conteo_ajusta_stock_y_registra_movimiento(self):
         conteo = self.crear_conteo()

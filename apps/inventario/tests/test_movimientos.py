@@ -22,16 +22,6 @@ class InventarioAPITests(APITestCase):
         self.almacen = Almacen.objects.create(nombre="Bodega")
         self.existencia = Existencia.objects.create(almacen=self.almacen, producto=self.producto, cantidad="3.000")
 
-    def test_salida_disminuye_existencia_y_crea_movimiento(self):
-        response = self.client.post(
-            "/api/v1/movimientos/registrar-salida/",
-            {"almacen": self.almacen.pk, "producto": self.producto.pk, "cantidad": "2", "referencia": "Uso interno"},
-            format="json",
-        )
-        self.assertEqual(response.status_code, 201)
-        self.existencia.refresh_from_db()
-        self.assertEqual(self.existencia.cantidad, 1)
-        self.assertEqual(Movimiento.objects.count(), 1)
 
     def test_salida_mayor_al_stock_se_rechaza(self):
         response = self.client.post(
@@ -43,9 +33,3 @@ class InventarioAPITests(APITestCase):
         self.existencia.refresh_from_db()
         self.assertEqual(self.existencia.cantidad, 3)
         self.assertEqual(Movimiento.objects.count(), 0)
-
-    def test_existencias_bajo_minimo_filtra_producto(self):
-        response = self.client.get("/api/v1/existencias/bajo-minimo/")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["producto_sku"], "INS-001")

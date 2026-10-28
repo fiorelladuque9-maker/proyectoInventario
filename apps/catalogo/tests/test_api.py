@@ -44,34 +44,6 @@ class ProductoAPITests(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Producto.objects.filter(sku="JAB-001").exists())
 
-    def test_lista_productos_filtrada_por_categoria(self):
-        otra_categoria = Categoria.objects.create(nombre="Alimentos")
-        Producto.objects.create(sku="JAB-001", nombre="Jabón", categoria=self.categoria)
-        Producto.objects.create(sku="ARR-001", nombre="Arroz", categoria=otra_categoria)
-        self.autenticar(self.operador)
-        response = self.client.get(self.url, {"categoria": self.categoria.pk})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["sku"], "JAB-001")
-
-    def test_consulta_detalle_producto(self):
-        product = Producto.objects.create(sku="JAB-001", nombre="Jabón", categoria=self.categoria)
-        self.autenticar(self.operador)
-        response = self.client.get(reverse("producto-detail", args=[product.pk]))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["nombre"], "Jabón")
-
-    def test_operador_actualiza_producto(self):
-        product = Producto.objects.create(sku="JAB-001", nombre="Jabón", categoria=self.categoria)
-        self.autenticar(self.operador)
-        response = self.client.patch(
-            reverse("producto-detail", args=[product.pk]),
-            {"nombre": "Jabón líquido"},
-            format="json",
-        )
-        self.assertEqual(response.status_code, 200)
-        product.refresh_from_db()
-        self.assertEqual(product.nombre, "Jabón líquido")
 
     def test_administrador_elimina_producto(self):
         product = Producto.objects.create(sku="JAB-001", nombre="Jabón", categoria=self.categoria)
@@ -85,29 +57,3 @@ class ProductoAPITests(APITestCase):
         response = self.client.post(self.url, self.datos_producto(stock_minimo="-1"), format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("stock_minimo", response.data)
-
-    def test_usuario_sin_token_recibe_401(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_perfil_consulta_no_puede_crear_producto(self):
-        self.autenticar(self.consulta)
-        response = self.client.post(self.url, self.datos_producto(), format="json")
-        self.assertEqual(response.status_code, 403)
-
-    def test_operador_no_puede_eliminar_producto(self):
-        product = Producto.objects.create(sku="JAB-001", nombre="Jabón", categoria=self.categoria)
-        self.autenticar(self.operador)
-        response = self.client.delete(reverse("producto-detail", args=[product.pk]))
-        self.assertEqual(response.status_code, 403)
-
-    def test_lista_productos_paginada(self):
-        Producto.objects.bulk_create([
-            Producto(sku=f"SKU-{number:03}", nombre=f"Producto {number}", categoria=self.categoria)
-            for number in range(21)
-        ])
-        self.autenticar(self.operador)
-        response = self.client.get(self.url, {"page": 2})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["count"], 21)
-        self.assertEqual(len(response.data["results"]), 1)

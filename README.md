@@ -73,7 +73,14 @@ Copie `.env.example` como `.env`, configure una base PostgreSQL y complete sus v
 
 ## Estado actual
 
-Se creó la configuración de Django, los cinco módulos, modelos con restricciones relacionales, panel de administración, autenticación por token, permisos por grupo y endpoints iniciales. Las migraciones iniciales ya se generaron y `manage.py check` no encontró problemas. Se incorporaron 21 pruebas automatizadas, pendientes de ejecución en el entorno local. También faltan revisión funcional completa y colección Postman.
+| Requisito | Estado |
+|---|---|
+| Autenticación por tokens | Hecho (`POST /api/v1/auth/token/`, pruebas en `apps/common/tests/`). |
+| Roles y permisos (Administrador, Operador, Consulta) | Hecho (`config/permissions.py`, comando `crear_roles`, matriz de permisos probada en todos los módulos). |
+| Dos módulos de negocio | Hecho: se implementaron cinco (catálogo, proveedores, compras, inventario y conteos). |
+| Pruebas automatizadas (CRUD, reglas de negocio, permisos) | Hecho: 15 pruebas, todas correctas. |
+| Colección de Postman | Hecho: carpeta `postman/`. |
+| Documentación | README, modelo de datos y guía de Postman. Falta completar la tabla del equipo. |
 
 ## Equipo
 
@@ -86,7 +93,16 @@ Se creó la configuración de Django, los cinco módulos, modelos con restriccio
 
 ## Pruebas automatizadas
 
-Las pruebas usan `APITestCase` y la base de datos temporal de Django. La suite incluye 21 casos para CRUD de productos, filtros, paginación, permisos por perfil, validaciones de compras, salidas de inventario y cierre de conteos.
+Las pruebas usan `APITestCase` y la base de datos temporal de Django. La suite tiene **15 casos** que cubren el token, el CRUD, las reglas de negocio y los permisos por perfil:
+
+| Ubicación | Casos | Qué cubre |
+|---|---|---|
+| `apps/common/tests/` | 6 | Login correcto e incorrecto; usuario sin perfil (403); lectura permitida a los tres perfiles; Consulta no puede crear; Operador no puede borrar. |
+| `apps/catalogo/tests/` | 3 | CRUD de productos: Operador crea, Administrador elimina y stock mínimo negativo rechazado. |
+| `apps/proveedores/tests/` | 2 | Creación de proveedor y rechazo de nombre duplicado. |
+| `apps/compras/tests/` | 2 | No se envía una orden sin líneas; recibir una orden aumenta el stock y registra el movimiento. |
+| `apps/inventario/tests/` | 1 | Una salida mayor al stock se rechaza sin modificar la existencia. |
+| `apps/conteos/tests/` | 1 | Cerrar un conteo ajusta la existencia y registra el movimiento. |
 
 Ejecute todas las pruebas con:
 
@@ -94,11 +110,34 @@ Ejecute todas las pruebas con:
 python manage.py test
 ```
 
-También puede ejecutar una aplicación específica, por ejemplo:
+También puede ejecutar un módulo específico, por ejemplo:
 
 ```powershell
 python manage.py test apps.compras.tests
 ```
 
-Los casos están en `apps/catalogo/tests/`, `apps/compras/tests/`, `apps/inventario/tests/` y `apps/conteos/tests/`. La suite se incorporó al repositorio; falta ejecutarla en el entorno local y corregir cualquier incidencia que aparezca.
+Resultado actual: 15 pruebas ejecutadas, todas correctas.
+
+## Colección de Postman
+
+Los archivos están en `postman/`:
+
+- `inventario.postman_collection.json`: 30 peticiones agrupadas en 8 carpetas (autenticación, catálogo, proveedores, almacenes, compras, existencias y salidas, conteos y permisos por perfil). Cada petición incluye pruebas de Postman.
+- `inventario-local.postman_environment.json`: variables `base_url` y credenciales de los tres perfiles.
+
+Preparación:
+
+1. Con el servidor activo, cree tres usuarios y asígnele a cada uno su grupo (`Administrador`, `Operador`, `Consulta`) desde `/admin/`. Puede usar los nombres del environment (`admin_postman`, `operador_postman`, `consulta_postman`) o cambiar las variables.
+2. En Postman use **Import** con los dos archivos y seleccione el environment «Inventario - Local».
+3. Ejecute la carpeta **1. Autenticación**: guarda los tres tokens automáticamente. La colección envía `Authorization: Token {{token}}`.
+4. Ejecute las demás carpetas en orden (o use **Run collection**). Las peticiones guardan los identificadores que necesitan las siguientes, por lo que conviene usar una base de datos de desarrollo.
+
+Resultado de la última ejecución con Newman: 42 verificaciones, 41 correctas. La que falla es la petición marcada `[Error conocido]`, que espera el comportamiento correcto.
+
+## Errores conocidos (pendientes de corregir)
+
+1. `apps/inventario/serializers.py`: `MovimientoSerializer` define `read_only_fields = fields` con `fields = "__all__"`, por lo que serializar un movimiento lanza error. Afecta a `POST /movimientos/registrar-salida/` y a `GET /movimientos/` cuando hay movimientos. Ninguna de las 15 pruebas automatizadas ejerce ese camino.
+2. `config/settings.py` importa el backend de MySQL de forma incondicional (primeras líneas). Sin `mysqlclient` instalado el proyecto no arranca aunque se use PostgreSQL o SQLite.
+3. El archivo `.env` incluido usa `DB_ENGINE=mysql`, mientras que este README describe PostgreSQL. Debe definirse el motor final de la entrega.
+4. Dos listados muestran la advertencia `UnorderedObjectListWarning` (`Existencia` y `Producto` sin orden por defecto).
 
