@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Un proveedor puede ofrecer varios productos mediante ProductoProveedor.
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=160, unique=True)
     identificacion = models.CharField(max_length=30, blank=True)
@@ -16,6 +17,7 @@ class Proveedor(models.Model):
         return self.nombre
 
 
+# Esta tabla intermedia guarda datos propios de cada oferta, como costo y preferencia.
 class ProductoProveedor(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name="catalogo")
     producto = models.ForeignKey("catalogo.Producto", on_delete=models.PROTECT, related_name="ofertas_proveedor")
@@ -25,6 +27,7 @@ class ProductoProveedor(models.Model):
 
     class Meta:
         constraints = [
+            # Evita duplicar la oferta del mismo producto para un proveedor.
             models.UniqueConstraint(fields=["proveedor", "producto"], name="proveedor_producto_unico"),
             models.CheckConstraint(condition=models.Q(costo_referencial__gte=0), name="oferta_costo_no_negativo"),
         ]

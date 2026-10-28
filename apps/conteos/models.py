@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 
+# Un conteo compara lo observado en un almacén con el saldo del sistema.
 class ConteoInventario(models.Model):
     class Estado(models.TextChoices):
         ABIERTO = "abierto", "Abierto"
@@ -20,6 +21,7 @@ class ConteoInventario(models.Model):
         return f"Conteo #{self.pk} - {self.almacen}"
 
 
+# La línea conserva el saldo inicial y la cantidad encontrada físicamente.
 class LineaConteo(models.Model):
     conteo = models.ForeignKey(ConteoInventario, on_delete=models.CASCADE, related_name="lineas")
     producto = models.ForeignKey("catalogo.Producto", on_delete=models.PROTECT, related_name="lineas_conteo")
@@ -33,6 +35,7 @@ class LineaConteo(models.Model):
             models.CheckConstraint(condition=models.Q(cantidad_contada__isnull=True) | models.Q(cantidad_contada__gte=0), name="conteo_fisico_no_negativo"),
         ]
 
+    # Una diferencia positiva requiere entrada; una negativa requiere salida.
     @property
     def diferencia(self):
         if self.cantidad_contada is None:

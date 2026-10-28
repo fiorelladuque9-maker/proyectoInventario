@@ -8,6 +8,7 @@ from apps.conteos.models import ConteoInventario, LineaConteo
 from apps.inventario.models import Almacen, Existencia, Movimiento
 
 
+# Estas pruebas cubren la captura del saldo, el cierre y sus ajustes de inventario.
 class ConteoInventarioAPITests(APITestCase):
     def setUp(self):
         user = get_user_model().objects.create_user(username="operador", password="clave-prueba-123")
@@ -25,6 +26,7 @@ class ConteoInventarioAPITests(APITestCase):
     def crear_conteo(self):
         return ConteoInventario.objects.create(almacen=self.almacen, creado_por=self.user)
 
+    # La línea conserva el saldo del sistema al momento de iniciar el conteo.
     def test_crear_linea_guarda_existencia_actual_como_base(self):
         conteo = self.crear_conteo()
         response = self.client.post(
@@ -35,6 +37,7 @@ class ConteoInventarioAPITests(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["cantidad_sistema"], "5.000")
 
+    # No se cierra el conteo mientras alguna cantidad física esté pendiente.
     def test_no_se_cierra_conteo_con_linea_sin_cantidad_contada(self):
         conteo = self.crear_conteo()
         LineaConteo.objects.create(
@@ -45,6 +48,7 @@ class ConteoInventarioAPITests(APITestCase):
         conteo.refresh_from_db()
         self.assertEqual(conteo.estado, ConteoInventario.Estado.ABIERTO)
 
+    # El cierre ajusta la existencia a lo contado y deja evidencia del ajuste.
     def test_cerrar_conteo_ajusta_stock_y_registra_movimiento(self):
         conteo = self.crear_conteo()
         LineaConteo.objects.create(

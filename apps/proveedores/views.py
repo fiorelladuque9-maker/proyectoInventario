@@ -5,7 +5,9 @@ from .models import ProductoProveedor, Proveedor
 from .serializers import ProductoProveedorSerializer, ProveedorSerializer
 
 
+# Devuelve proveedores con su número de productos, filtros y búsqueda.
 class ProveedorViewSet(ModelViewSet):
+    # distinct=True evita contar dos veces un producto por las uniones de la relación N:M.
     queryset = Proveedor.objects.annotate(cantidad_productos=Count("productos", distinct=True)).all()
     serializer_class = ProveedorSerializer
     permission_classes = [InventarioRolePermission]
@@ -14,6 +16,7 @@ class ProveedorViewSet(ModelViewSet):
     ordering_fields = ["nombre"]
 
 
+# Administra la relación y los datos comerciales entre proveedor y producto.
 class ProductoProveedorViewSet(ModelViewSet):
     queryset = ProductoProveedor.objects.select_related("proveedor", "producto").all()
     serializer_class = ProductoProveedorSerializer

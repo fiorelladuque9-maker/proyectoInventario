@@ -8,6 +8,7 @@ class AlmacenSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+# El saldo se consulta; solo los procesos de negocio autorizados pueden cambiarlo.
 class ExistenciaSerializer(serializers.ModelSerializer):
     producto_sku = serializers.CharField(source="producto.sku", read_only=True)
     producto_nombre = serializers.CharField(source="producto.nombre", read_only=True)
@@ -19,6 +20,7 @@ class ExistenciaSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+# El historial es de solo lectura desde el CRUD; se agrega mediante acciones de negocio.
 class MovimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movimiento

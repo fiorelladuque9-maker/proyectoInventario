@@ -9,6 +9,7 @@ from apps.inventario.models import Almacen, Existencia, Movimiento
 from apps.proveedores.models import ProductoProveedor, Proveedor
 
 
+# Estas pruebas siguen el flujo de compra y verifican que los errores no alteren existencias.
 class OrdenCompraAPITests(APITestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="operador", password="clave-prueba-123")
@@ -33,6 +34,7 @@ class OrdenCompraAPITests(APITestCase):
         self.assertEqual(response.status_code, 201)
         return OrdenCompra.objects.get(pk=response.data["id"])
 
+    # La orden no puede incluir un producto que el proveedor no ofrece.
     def test_producto_no_asociado_al_proveedor_se_rechaza(self):
         order = self.crear_orden()
         response = self.client.post(
@@ -43,6 +45,7 @@ class OrdenCompraAPITests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(LineaCompra.objects.filter(orden=order).exists())
 
+    # Una orden vacía permanece en borrador y no se envía.
     def test_no_se_envia_orden_sin_lineas(self):
         order = self.crear_orden()
         response = self.client.post(f"/api/v1/ordenes-compra/{order.pk}/enviar/", {}, format="json")
@@ -50,6 +53,7 @@ class OrdenCompraAPITests(APITestCase):
         order.refresh_from_db()
         self.assertEqual(order.estado, OrdenCompra.Estado.BORRADOR)
 
+    # La recepción solo es válida después de enviar la orden.
     def test_orden_borrador_no_se_puede_recibir(self):
         order = self.crear_orden()
         response = self.client.post(
@@ -60,6 +64,7 @@ class OrdenCompraAPITests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Existencia.objects.filter(almacen=self.almacen).exists())
 
+    # Recibir la orden aumenta el saldo y deja un movimiento de auditoría.
     def test_recibir_orden_enviada_aumenta_stock_y_registra_movimiento(self):
         order = self.crear_orden()
         line_response = self.client.post(
@@ -81,6 +86,7 @@ class OrdenCompraAPITests(APITestCase):
         self.assertEqual(Existencia.objects.get(almacen=self.almacen, producto=self.producto).cantidad, 4)
         self.assertEqual(Movimiento.objects.filter(referencia=f"Recepción de orden #{order.pk}").count(), 1)
 
+    # Evita duplicar el inventario si se intenta recibir dos veces la orden.
     def test_orden_recibida_no_se_puede_recibir_dos_veces(self):
         order = self.crear_orden()
         self.client.post(

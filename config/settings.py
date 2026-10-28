@@ -14,6 +14,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "local-only-change-this-key")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")]
 
+# Django, REST Framework y las cinco áreas funcionales registradas en el proyecto.
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -56,6 +57,7 @@ TEMPLATES = [{
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
+# DB_ENGINE permite usar SQLite en desarrollo y MySQL/PostgreSQL en la entrega.
 if os.getenv("DB_ENGINE", "sqlite").lower() == "postgresql":
     DATABASES = {"default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -94,6 +96,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# La API usa tokens; los filtros, la búsqueda, el orden y la paginación son comunes.
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.TokenAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],

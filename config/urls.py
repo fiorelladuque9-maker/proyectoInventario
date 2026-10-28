@@ -6,12 +6,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 
+# Esta ruta pública permite comprobar rápidamente si la API está disponible.
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def health_check(request):
     return Response({"estado": "ok", "servicio": "API de Inventario"})
 
 
+# Cada aplicación conecta sus endpoints bajo la versión /api/v1/.
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/health/", health_check, name="health-check"),

@@ -18,6 +18,7 @@ class LineaConteoSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ["cantidad_sistema", "diferencia"]
 
+    # Una vez cerrado el conteo, sus líneas no deben cambiar; PATCH también se valida.
     def validate(self, attrs):
         conteo = attrs.get("conteo", getattr(self.instance, "conteo", None))
         producto = attrs.get("producto", getattr(self.instance, "producto", None))
@@ -30,6 +31,7 @@ class LineaConteoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"producto": "No se puede cambiar el producto de una línea existente."})
         return attrs
 
+    # Al iniciar una línea se guarda una fotografía del saldo que se va a comparar.
     def create(self, validated_data):
         conteo = validated_data["conteo"]
         producto = validated_data["producto"]

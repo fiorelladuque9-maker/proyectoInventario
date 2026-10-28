@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 
+# El almacén separa el saldo de un producto por ubicación física.
 class Almacen(models.Model):
     nombre = models.CharField(max_length=120, unique=True)
     ubicacion = models.CharField(max_length=200, blank=True)
@@ -14,6 +15,7 @@ class Almacen(models.Model):
         return self.nombre
 
 
+# Existencia guarda el saldo actual de un producto dentro de un almacén.
 class Existencia(models.Model):
     almacen = models.ForeignKey(Almacen, on_delete=models.PROTECT, related_name="existencias")
     producto = models.ForeignKey("catalogo.Producto", on_delete=models.PROTECT, related_name="existencias")
@@ -21,6 +23,7 @@ class Existencia(models.Model):
 
     class Meta:
         constraints = [
+            # Solo puede existir un saldo por combinación de almacén y producto.
             models.UniqueConstraint(fields=["almacen", "producto"], name="existencia_producto_por_almacen_unica"),
             models.CheckConstraint(condition=models.Q(cantidad__gte=0), name="existencia_cantidad_no_negativa"),
         ]
@@ -29,6 +32,7 @@ class Existencia(models.Model):
         return f"{self.producto} en {self.almacen}: {self.cantidad}"
 
 
+# Cada movimiento conserva el historial de entradas, salidas y ajustes.
 class Movimiento(models.Model):
     class Tipo(models.TextChoices):
         ENTRADA = "entrada", "Entrada"
