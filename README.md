@@ -1,5 +1,96 @@
 # API Backend de Gestión de Inventario y Abastecimiento
+# API Backend de Gestión de Inventario y Abastecimiento
 
+API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)** para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén.
+
+---
+
+## Tabla de Contenidos
+
+- [Visión General](#visión-general)
+- [Arquitectura de Módulos](#arquitectura-de-módulos)
+- [Requisitos Previos](#requisitos-previos)
+- [Instalación y Configuración](#instalación-y-configuración)
+- [Mapeo de Roles y Permisos](#mapeo-de-roles-y-permisos)
+- [Endpoints Principales](#endpoints-principales)
+- [Pruebas Automatizadas](#pruebas-automatizadas)
+- [Colección de Postman](#colección-de-postman)
+- [Limitaciones Conocidas y Notas Técnicas](#limitaciones-conocidas-y-notas-técnicas)
+
+---
+
+## Visión General
+
+El sistema atiende la necesidad operativa de una pequeña o mediana organización para llevar el control de stock en tiempo real. Permite:
+- Mantener un catálogo de productos estructurado por categorías.
+- Registrar proveedores y gestionar catálogos de ofertas/costos de productos.
+- Crear, enviar y recibir órdenes de compra que alimentan automáticamente el inventario.
+- Controlar existencias físicas por almacén y registrar movimientos de auditoría (entradas/salidas).
+- Efectuar conteos físicos periódicos para conciliar las existencias del sistema contra la realidad en almacén.
+
+---
+
+## Arquitectura de Módulos
+
+El proyecto está segmentado en **5 módulos de negocio** y **1 de soporte**:
+
+1. **`apps.catalogo`**: Control de categorías, productos, SKU, unidades de medida y stock mínimo.
+2. **`apps.proveedores`**: Gestión de proveedores y ofertas comerciales (relación N:M entre producto y proveedor con precios de referencia).
+3. **`apps.compras`**: Órdenes de compra y sus líneas de detalle. Gestiona el flujo `borrador` $\rightarrow$ `enviada` $\rightarrow$ `recibida`.
+4. **`apps.inventario`**: Administración de almacenes, saldos (`Existencia`) y registro histórico de auditoría (`Movimiento`).
+5. **`apps.conteos`**: Auditoría y toma de inventario físico por almacén; concilia diferencias y ajusta automáticamente las existencias.
+6. **`apps.common`**: Módulo transversal de soporte (no expone modelos); incluye utilidades, clases de permisos y el comando de inicialización de roles.
+
+---
+
+## Requisitos Previos
+
+- **Python 3.10+**
+- **Virtualenv / venv**
+- Base de datos relacional: **SQLite** (por defecto para desarrollo local) o **PostgreSQL** / **MySQL**.
+- Git
+
+---
+
+## Instalación y Configuración
+
+Sigue estos pasos para desplegar el entorno de desarrollo desde una instalación limpia:
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/fiorelladuque9-maker/proyectoInventario.git
+cd proyectoInventario
+```
+
+### 2. Crear y activar el entorno virtual
+En Linux/macOS:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+En Windows:
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 3. Instalar dependencias
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 4. Configurar variables de entorno
+Copia la plantilla de variables de entorno y ajusta los valores según tu configuración local:
+```bash
+cp .env.example .env
+```
+
+> **Nota:** Por defecto, si no se define `DB_ENGINE`, el proyecto utilizará SQLite (`db.sqlite3`). Para PostgreSQL o MySQL, actualiza las variables `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`.
+
+### 5. Ejecutar migraciones de base de datos
+```bash
 API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)** para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén.
 
 ---
@@ -101,7 +192,21 @@ python manage.py crear_roles
 
 ### 7. Crear Superusuario (Administrador del Sistema)
 ```bash
+```
+
+### 6. Inicializar Roles y Perfiles
+Ejecuta el comando personalizado e idempotente para crear los grupos de seguridad obligatorios (`Administrador`, `Operador`, `Consulta`):
+```bash
+python manage.py crear_roles
+```
+
+### 7. Crear Superusuario (Administrador del Sistema)
+```bash
 python manage.py createsuperuser
+```
+
+### 8. Iniciar el servidor de desarrollo
+```bash
 ```
 
 ### 8. Iniciar el servidor de desarrollo
@@ -168,9 +273,19 @@ Todos los endpoints requieren la cabecera `Authorization: Token <token>` (except
 Para ejecutar el paquete completo de pruebas unitarias e integración:
 
 ```bash
+```bash
 python manage.py test
 ```
 
+### Cobertura de Pruebas
+La suite incluye pruebas sobre:
+- Autenticación por token y comprobación de permisos (HTTP 401 y 403) para los tres roles.
+- Validación de reglas de negocio en compras (envío de órdenes vacías, recepción duplicada).
+- Integridad en movimientos de inventario y rechazo de salidas sin saldo suficiente.
+- Captura de fotografía de saldo al crear líneas de conteo y conciliación al cerrar.
+- Filtros, búsqueda y paginación en listados.
+
+---
 ### Cobertura de Pruebas
 La suite incluye pruebas sobre:
 - Autenticación por token y comprobación de permisos (HTTP 401 y 403) para los tres roles.
