@@ -6,7 +6,7 @@ from apps.proveedores.models import Proveedor
 class ProveedorAPITests(RolesTestCase):
     def setUp(self):
         self.crear_usuarios_por_rol()
-        self.url = "/api/proveedores/"
+        self.url = "/api/v1/proveedores/"
 
     def datos(self, **extra):
         data = {"nombre": "Distribuidora Sur", "identificacion": "3-101-123456",

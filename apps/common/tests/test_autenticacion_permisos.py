@@ -6,24 +6,24 @@ from apps.proveedores.models import Proveedor
 from .helpers import RolesTestCase
 
 LISTADOS = [
-    "/api/categorias/",
-    "/api/productos/",
-    "/api/proveedores/",
-    "/api/productos-proveedor/",
-    "/api/ordenes-compra/",
-    "/api/lineas-compra/",
-    "/api/almacenes/",
-    "/api/existencias/",
-    "/api/movimientos/",
-    "/api/conteos/",
-    "/api/lineas-conteo/",
+    "/api/v1/categorias/",
+    "/api/v1/productos/",
+    "/api/v1/proveedores/",
+    "/api/v1/productos-proveedor/",
+    "/api/v1/ordenes-compra/",
+    "/api/v1/lineas-compra/",
+    "/api/v1/almacenes/",
+    "/api/v1/existencias/",
+    "/api/v1/movimientos/",
+    "/api/v1/conteos/",
+    "/api/v1/lineas-conteo/",
 ]
 
 
 class TokenAPITests(RolesTestCase):
     def setUp(self):
         self.crear_usuarios_por_rol()
-        self.url = "/api/token/"
+        self.url = "/api/v1/auth/token/"
 
 
     def test_login_correcto_devuelve_token(self):
@@ -65,11 +65,11 @@ class PermisosPorPerfilTests(RolesTestCase):
     def test_consulta_no_puede_crear_en_ningun_modulo(self):
         self.autenticar(self.consulta)
         intentos = {
-            "/api/categorias/": {"nombre": "Nueva"},
-            "/api/proveedores/": {"nombre": "Nuevo proveedor"},
-            "/api/almacenes/": {"nombre": "Nuevo almacén"},
-            "/api/ordenes-compra/": {"proveedor": self.proveedor.pk},
-            "/api/conteos/": {"almacen": self.almacen.pk},
+            "/api/v1/categorias/": {"nombre": "Nueva"},
+            "/api/v1/proveedores/": {"nombre": "Nuevo proveedor"},
+            "/api/v1/almacenes/": {"nombre": "Nuevo almacén"},
+            "/api/v1/ordenes-compra/": {"proveedor": self.proveedor.pk},
+            "/api/v1/conteos/": {"almacen": self.almacen.pk},
         }
         for url, datos in intentos.items():
             with self.subTest(url=url):
@@ -79,9 +79,9 @@ class PermisosPorPerfilTests(RolesTestCase):
     def test_operador_no_puede_borrar_en_ningun_modulo(self):
         self.autenticar(self.operador)
         for url in (
-            f"/api/categorias/{self.categoria.pk}/",
-            f"/api/proveedores/{self.proveedor.pk}/",
-            f"/api/almacenes/{self.almacen.pk}/",
+            f"/api/v1/categorias/{self.categoria.pk}/",
+            f"/api/v1/proveedores/{self.proveedor.pk}/",
+            f"/api/v1/almacenes/{self.almacen.pk}/",
         ):
             with self.subTest(url=url):
                 self.assertEqual(self.client.delete(url).status_code, 403)

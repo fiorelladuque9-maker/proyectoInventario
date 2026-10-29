@@ -25,4 +25,4 @@ class MovimientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movimiento
         fields = "__all__"
-        read_only_fields = fields
+        read_only_fields = ("id", "almacen", "producto", "tipo", "cantidad", "referencia", "registrado_por", "creado_en")

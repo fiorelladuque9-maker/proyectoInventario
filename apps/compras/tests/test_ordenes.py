@@ -4,7 +4,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from apps.catalogo.models import Categoria, Producto
-from apps.compras.models import OrdenCompra
+from apps.compras.models import LineaCompra, OrdenCompra
 from apps.inventario.models import Almacen, Existencia, Movimiento
 from apps.proveedores.models import ProductoProveedor, Proveedor
 
@@ -27,7 +27,7 @@ class OrdenCompraAPITests(APITestCase):
 
     def crear_orden(self):
         response = self.client.post(
-            "/api/ordenes-compra/",
+            "/api/v1/ordenes-compra/",
             {"proveedor": self.proveedor.pk, "notas": "Reposición mensual"},
             format="json",
         )
@@ -38,7 +38,7 @@ class OrdenCompraAPITests(APITestCase):
     def test_producto_no_asociado_al_proveedor_se_rechaza(self):
         order = self.crear_orden()
         response = self.client.post(
-            "/api/lineas-compra/",
+            "/api/v1/lineas-compra/",
             {"orden": order.pk, "producto": self.otro_producto.pk, "cantidad": "2", "costo_unitario": "8.00"},
             format="json",
         )
@@ -48,7 +48,7 @@ class OrdenCompraAPITests(APITestCase):
     # Una orden vacía permanece en borrador y no se envía.
     def test_no_se_envia_orden_sin_lineas(self):
         order = self.crear_orden()
-        response = self.client.post(f"/api/ordenes-compra/{order.pk}/enviar/", {}, format="json")
+        response = self.client.post(f"/api/v1/ordenes-compra/{order.pk}/enviar/", {}, format="json")
         self.assertEqual(response.status_code, 400)
         order.refresh_from_db()
         self.assertEqual(order.estado, OrdenCompra.Estado.BORRADOR)
@@ -57,7 +57,7 @@ class OrdenCompraAPITests(APITestCase):
     def test_orden_borrador_no_se_puede_recibir(self):
         order = self.crear_orden()
         response = self.client.post(
-            f"/api/ordenes-compra/{order.pk}/recibir/",
+            f"/api/v1/ordenes-compra/{order.pk}/recibir/",
             {"almacen": self.almacen.pk},
             format="json",
         )
@@ -68,16 +68,16 @@ class OrdenCompraAPITests(APITestCase):
     def test_recibir_orden_enviada_aumenta_stock_y_registra_movimiento(self):
         order = self.crear_orden()
         line_response = self.client.post(
-            "/api/lineas-compra/",
+            "/api/v1/lineas-compra/",
             {"orden": order.pk, "producto": self.producto.pk, "cantidad": "4", "costo_unitario": "10.00"},
             format="json",
         )
         self.assertEqual(line_response.status_code, 201)
-        send_response = self.client.post(f"/api/ordenes-compra/{order.pk}/enviar/", {}, format="json")
+        send_response = self.client.post(f"/api/v1/ordenes-compra/{order.pk}/enviar/", {}, format="json")
         self.assertEqual(send_response.status_code, 200)
 
         response = self.client.post(
-            f"/api/ordenes-compra/{order.pk}/recibir/",
+            f"/api/v1/ordenes-compra/{order.pk}/recibir/",
             {"almacen": self.almacen.pk},
             format="json",
         )
@@ -90,15 +90,15 @@ class OrdenCompraAPITests(APITestCase):
     def test_orden_recibida_no_se_puede_recibir_dos_veces(self):
         order = self.crear_orden()
         self.client.post(
-            "/api/lineas-compra/",
+            "/api/v1/lineas-compra/",
             {"orden": order.pk, "producto": self.producto.pk, "cantidad": "4", "costo_unitario": "10.00"},
             format="json",
         )
-        self.client.post(f"/api/ordenes-compra/{order.pk}/enviar/", {}, format="json")
-        self.client.post(f"/api/ordenes-compra/{order.pk}/recibir/", {"almacen": self.almacen.pk}, format="json")
+        self.client.post(f"/api/v1/ordenes-compra/{order.pk}/enviar/", {}, format="json")
+        self.client.post(f"/api/v1/ordenes-compra/{order.pk}/recibir/", {"almacen": self.almacen.pk}, format="json")
 
         response = self.client.post(
-            f"/api/ordenes-compra/{order.pk}/recibir/",
+            f"/api/v1/ordenes-compra/{order.pk}/recibir/",
             {"almacen": self.almacen.pk},
             format="json",
         )

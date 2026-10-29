@@ -30,7 +30,7 @@ class ConteoInventarioAPITests(APITestCase):
     def test_crear_linea_guarda_existencia_actual_como_base(self):
         conteo = self.crear_conteo()
         response = self.client.post(
-            "/api/lineas-conteo/",
+            "/api/v1/lineas-conteo/",
             {"conteo": conteo.pk, "producto": self.producto.pk},
             format="json",
         )
@@ -43,7 +43,7 @@ class ConteoInventarioAPITests(APITestCase):
         LineaConteo.objects.create(
             conteo=conteo, producto=self.producto, cantidad_sistema=5, cantidad_contada=None
         )
-        response = self.client.post(f"/api/conteos/{conteo.pk}/cerrar/", {}, format="json")
+        response = self.client.post(f"/api/v1/conteos/{conteo.pk}/cerrar/", {}, format="json")
         self.assertEqual(response.status_code, 400)
         conteo.refresh_from_db()
         self.assertEqual(conteo.estado, ConteoInventario.Estado.ABIERTO)
@@ -54,7 +54,7 @@ class ConteoInventarioAPITests(APITestCase):
         LineaConteo.objects.create(
             conteo=conteo, producto=self.producto, cantidad_sistema=5, cantidad_contada=7
         )
-        response = self.client.post(f"/api/conteos/{conteo.pk}/cerrar/", {}, format="json")
+        response = self.client.post(f"/api/v1/conteos/{conteo.pk}/cerrar/", {}, format="json")
         self.assertEqual(response.status_code, 200)
         self.existencia.refresh_from_db()
         conteo.refresh_from_db()

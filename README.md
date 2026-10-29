@@ -1,143 +1,199 @@
-# API de Inventario y Abastecimiento
+# API Backend de Gestión de Inventario y Abastecimiento
 
-Backend académico para controlar productos, proveedores, compras, existencias y conteos físicos en una organización pequeña.
+API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)** para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén.
 
-## Flujo del negocio
+---
 
-1. Se registra el catálogo de productos y sus proveedores.
-2. El equipo crea una orden de compra para un proveedor y agrega sus líneas.
-3. Se envía la orden; al recibirla en un almacén, se crea una entrada por cada línea.
-4. Las salidas y ajustes generan movimientos auditables y actualizan las existencias.
-5. Un conteo físico compara las cantidades observadas con las del sistema y registra las diferencias.
+## Tabla de Contenidos
 
-## Módulos
+- [Visión General](#visión-general)
+- [Arquitectura de Módulos](#arquitectura-de-módulos)
+- [Requisitos Previos](#requisitos-previos)
+- [Instalación y Configuración](#instalación-y-configuración)
+- [Mapeo de Roles y Permisos](#mapeo-de-roles-y-permisos)
+- [Endpoints Principales](#endpoints-principales)
+- [Pruebas Automatizadas](#pruebas-automatizadas)
+- [Colección de Postman](#colección-de-postman)
+- [Limitaciones Conocidas y Notas Técnicas](#limitaciones-conocidas-y-notas-técnicas)
 
-| Aplicación | Responsabilidad |
-|---|---|
-| `catalogo` | Categorías, productos, unidades y nivel mínimo de inventario. |
-| `proveedores` | Proveedores y relación de productos con costo de referencia. |
-| `compras` | Órdenes y líneas de compra, envío y recepción. |
-| `inventario` | Almacenes, existencias, movimientos y consulta de productos bajo mínimo. |
-| `conteos` | Conteos físicos y comparación contra las cantidades registradas. |
+---
 
-Relaciones: proveedor–orden (1:N), orden–líneas (1:N), producto–proveedor (N:M mediante `ProductoProveedor`), almacén–existencias (1:N), producto–existencias (1:N), conteo–líneas (1:N).
+## Visión General
 
-## Tecnologías
+El sistema atiende la necesidad operativa de una pequeña o mediana organización para llevar el control de stock en tiempo real. Permite:
+- Mantener un catálogo de productos estructurado por categorías.
+- Registrar proveedores y gestionar catálogos de ofertas/costos de productos.
+- Crear, enviar y recibir órdenes de compra que alimentan automáticamente el inventario.
+- Controlar existencias físicas por almacén y registrar movimientos de auditoría (entradas/salidas).
+- Efectuar conteos físicos periódicos para conciliar las existencias del sistema contra la realidad en almacén.
 
-- Python 3.12 o superior
-- Django 6.1 y Django REST Framework
-- PostgreSQL como base de datos objetivo
-- Tokens de DRF para autenticación
+---
 
-Para facilitar los primeros pasos, el proyecto usa SQLite cuando `DB_ENGINE` no está configurado como `postgresql`. La entrega final del curso debe ejecutarse con PostgreSQL o MySQL.
+## Arquitectura de Módulos
 
-## Preparación local (Windows PowerShell)
+El proyecto está segmentado en **5 módulos de negocio** y **1 de soporte**:
 
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-Copy-Item .env.example .env
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py crear_roles
-python manage.py runserver
+1. **`apps.catalogo`**: Control de categorías, productos, SKU, unidades de medida y stock mínimo.
+2. **`apps.proveedores`**: Gestión de proveedores y ofertas comerciales (relación N:M entre producto y proveedor con precios de referencia).
+3. **`apps.compras`**: Órdenes de compra y sus líneas de detalle. Gestiona el flujo `borrador` $\rightarrow$ `enviada` $\rightarrow$ `recibida`.
+4. **`apps.inventario`**: Administración de almacenes, saldos (`Existencia`) y registro histórico de auditoría (`Movimiento`).
+5. **`apps.conteos`**: Auditoría y toma de inventario físico por almacén; concilia diferencias y ajusta automáticamente las existencias.
+6. **`apps.common`**: Módulo transversal de soporte (no expone modelos); incluye utilidades, clases de permisos y el comando de inicialización de roles.
+
+---
+
+## Requisitos Previos
+
+- **Python 3.10+**
+- **Virtualenv / venv**
+- Base de datos relacional: **SQLite** (por defecto para desarrollo local) o **PostgreSQL** / **MySQL**.
+- Git
+
+---
+
+## Instalación y Configuración
+
+Sigue estos pasos para desplegar el entorno de desarrollo desde una instalación limpia:
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/fiorelladuque9-maker/proyectoInventario.git
+cd proyectoInventario
 ```
 
-API de comprobación: `GET http://127.0.0.1:8000/api/health/`  
-Token: `POST http://127.0.0.1:8000/api/token/` con `username` y `password`.
+### 2. Crear y activar el entorno virtual
+En Linux/macOS:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-Todos los demás endpoints requieren el encabezado `Authorization: Token <token>`. Los perfiles son `Administrador` (lectura, escritura y borrado), `Operador` (lectura y escritura) y `Consulta` (solo lectura). Asigna uno de esos grupos a cada usuario desde el panel de administración.
+En Windows:
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
 
-## Endpoints iniciales
+### 3. Instalar dependencias
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-- `categorias/`, `productos/`
-- `proveedores/`, `productos-proveedor/`
-- `ordenes-compra/`, `lineas-compra/`
-- `almacenes/`, `existencias/`, `movimientos/`
-- `conteos/`, `lineas-conteo/`
+### 4. Configurar variables de entorno
+Copia la plantilla de variables de entorno y ajusta los valores según tu configuración local:
+```bash
+cp .env.example .env
+```
 
-Acciones del proceso:
+> **Nota:** Por defecto, si no se define `DB_ENGINE`, el proyecto utilizará SQLite (`db.sqlite3`). Para PostgreSQL o MySQL, actualiza las variables `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`.
 
-- `POST /api/ordenes-compra/{id}/enviar/`
-- `POST /api/ordenes-compra/{id}/recibir/` con `{"almacen": 1}`
-- `POST /api/movimientos/registrar-salida/` con `almacen`, `producto`, `cantidad` y `referencia`
-- `GET /api/existencias/bajo-minimo/`
-- `POST /api/conteos/{id}/cerrar/`
+### 5. Ejecutar migraciones de base de datos
+```bash
+python manage.py migrate
+```
 
-Las existencias y los movimientos se consultan mediante API; el saldo se actualiza al recibir compras, registrar salidas y cerrar conteos, para mantener el historial consistente.
+### 6. Inicializar Roles y Perfiles
+Ejecuta el comando personalizado e idempotente para crear los grupos de seguridad obligatorios (`Administrador`, `Operador`, `Consulta`):
+```bash
+python manage.py crear_roles
+```
 
-## Configuración de PostgreSQL
+### 7. Crear Superusuario (Administrador del Sistema)
+```bash
+python manage.py createsuperuser
+```
 
-Copie `.env.example` como `.env`, configure una base PostgreSQL y complete sus variables de conexión. Cambie `DB_ENGINE` a `postgresql`. No suba `.env` a GitHub.
+### 8. Iniciar el servidor de desarrollo
+```bash
+python manage.py runserver
+```
+La API estará disponible en: `http://127.0.0.1:8000/api/v1/`
 
-## Estado actual
+---
 
-| Requisito | Estado |
-|---|---|
-| Autenticación por tokens | Hecho (`POST /api/token/`, pruebas en `apps/common/tests/`). |
-| Roles y permisos (Administrador, Operador, Consulta) | Hecho (`config/permissions.py`, comando `crear_roles`, matriz de permisos probada en todos los módulos). |
-| Dos módulos de negocio | Hecho: se implementaron cinco (catálogo, proveedores, compras, inventario y conteos). |
-| Pruebas automatizadas (CRUD, reglas de negocio, permisos) | Hecho: 15 pruebas, todas correctas. |
-| Colección de Postman | Hecho: carpeta `postman/`. |
-| Documentación | README, modelo de datos y guía de Postman. Falta completar la tabla del equipo. |
+## Mapeo de Roles y Permisos
 
-## Equipo
+El sistema implementa seguridad basada en roles mediante `TokenAuthentication` y la clase personalizada `InventarioRolePermission`.
 
-| Integrante | Responsabilidad | GitHub |
-|---|---|---|
-| Por definir | Por definir | Por definir |
-| Por definir | Por definir | Por definir |
-| Por definir | Por definir | Por definir |
+### Perfiles de Usuario
 
+- **`Administrador`**: Acceso total al sistema (Lectura, Creación, Actualización y Eliminación / `DELETE`).
+- **`Operador`**: Acceso operativo (Lectura, Creación, Edición y ejecución de Acciones de Negocio). No puede eliminar registros.
+- **`Consulta`**: Acceso exclusivo de solo lectura (`GET`, `HEAD`, `OPTIONS`).
 
-## Pruebas automatizadas
+### Matriz de Permisos General
 
-Las pruebas usan `APITestCase` y la base de datos temporal de Django. La suite tiene **15 casos** que cubren el token, el CRUD, las reglas de negocio y los permisos por perfil:
+| Método HTTP | Administrador | Operador | Consulta | Sin Grupo / Sin Token |
+| :--- | :---: | :---: | :---: | :---: |
+| **GET / HEAD / OPTIONS** | Permitido | Permitido | Permitido | 403 / 401 |
+| **POST / PUT / PATCH** | Permitido | Permitido | 403 | 403 / 401 |
+| **DELETE** | Permitido | 403 | 403 | 403 / 401 |
+| **Acciones Especiales (Ej. Recepción, Salida, Cierre)** | Permitido | Permitido | 403 | 403 / 401 |
 
-| Ubicación | Casos | Qué cubre |
-|---|---|---|
-| `apps/common/tests/` | 6 | Login correcto e incorrecto; usuario sin perfil (403); lectura permitida a los tres perfiles; Consulta no puede crear; Operador no puede borrar. |
-| `apps/catalogo/tests/` | 3 | CRUD de productos: Operador crea, Administrador elimina y stock mínimo negativo rechazado. |
-| `apps/proveedores/tests/` | 2 | Creación de proveedor y rechazo de nombre duplicado. |
-| `apps/compras/tests/` | 2 | No se envía una orden sin líneas; recibir una orden aumenta el stock y registra el movimiento. |
-| `apps/inventario/tests/` | 1 | Una salida mayor al stock se rechaza sin modificar la existencia. |
-| `apps/conteos/tests/` | 1 | Cerrar un conteo ajusta la existencia y registra el movimiento. |
+---
 
-Ejecute todas las pruebas con:
+## Endpoints Principales
 
-```powershell
+Todos los endpoints requieren la cabecera `Authorization: Token <token>` (excepto salud y obtención de token).
+
+### Autenticación y Salud
+- `POST /api/v1/auth/token/`: Obtención de token con `username` y `password`.
+- `GET /api/v1/health/`: Estado de salud del servicio (público).
+
+### Módulos CRUD
+- **Categorías**: `/api/v1/categorias/`
+- **Productos**: `/api/v1/productos/` (incluye ordenamiento, filtros por categoría/activo y cálculo de `stock_total`).
+- **Proveedores**: `/api/v1/proveedores/`
+- **Ofertas Proveedor-Producto**: `/api/v1/productos-proveedor/`
+- **Órdenes de Compra**: `/api/v1/ordenes-compra/`
+- **Líneas de Compra**: `/api/v1/lineas-compra/`
+- **Almacenes**: `/api/v1/almacenes/`
+- **Existencias**: `/api/v1/existencias/` (Solo Lectura)
+- **Movimientos**: `/api/v1/movimientos/` (Solo Lectura)
+- **Conteos**: `/api/v1/conteos/`
+- **Líneas de Conteo**: `/api/v1/lineas-conteo/`
+
+### Acciones de Negocio Destacadas
+- `POST /api/v1/ordenes-compra/{id}/enviar/`: Pasa una orden de borrador a enviada.
+- `POST /api/v1/ordenes-compra/{id}/recibir/`: Recibe la orden e incrementa el inventario en el almacén destino.
+- `GET /api/v1/existencias/bajo-minimo/`: Muestra saldos por almacén que están por debajo del `stock_minimo` del producto.
+- `POST /api/v1/movimientos/registrar-salida/`: Registra una salida manual validando que exista saldo suficiente.
+- `POST /api/v1/conteos/{id}/cerrar/`: Procesa las diferencias contadas y genera automáticamente las entradas/salidas de ajuste.
+
+---
+
+## Pruebas Automatizadas
+
+Para ejecutar el paquete completo de pruebas unitarias e integración:
+
+```bash
 python manage.py test
 ```
 
-También puede ejecutar un módulo específico, por ejemplo:
+### Cobertura de Pruebas
+La suite incluye pruebas sobre:
+- Autenticación por token y comprobación de permisos (HTTP 401 y 403) para los tres roles.
+- Validación de reglas de negocio en compras (envío de órdenes vacías, recepción duplicada).
+- Integridad en movimientos de inventario y rechazo de salidas sin saldo suficiente.
+- Captura de fotografía de saldo al crear líneas de conteo y conciliación al cerrar.
+- Filtros, búsqueda y paginación en listados.
 
-```powershell
-python manage.py test apps.compras.tests
-```
-
-Resultado actual: 15 pruebas ejecutadas, todas correctas.
+---
 
 ## Colección de Postman
 
-Los archivos están en `postman/`:
+El repositorio incluye en la raíz el archivo exportado de la colección y su entorno para pruebas de integración:
+- **Colección:** `Postman_Collection.json`
+- **Entorno:** `Postman_Environment.json`
 
-- `inventario.postman_collection.json`: 30 peticiones agrupadas en 8 carpetas (autenticación, catálogo, proveedores, almacenes, compras, existencias y salidas, conteos y permisos por perfil). Cada petición incluye pruebas de Postman.
-- `inventario-local.postman_environment.json`: variables `base_url` y credenciales de los tres perfiles.
+Permite probar más de 20 peticiones documentadas, incluyendo flujos de error esperados (`400`, `401`, `403`, `404`).
 
-Preparación:
+---
 
-1. Con el servidor activo, cree tres usuarios y asígnele a cada uno su grupo (`Administrador`, `Operador`, `Consulta`) desde `/admin/`. Puede usar los nombres del environment (`admin_postman`, `operador_postman`, `consulta_postman`) o cambiar las variables.
-2. En Postman use **Import** con los dos archivos y seleccione el environment «Inventario - Local».
-3. Ejecute la carpeta **1. Autenticación**: guarda los tres tokens automáticamente. La colección envía `Authorization: Token {{token}}`.
-4. Ejecute las demás carpetas en orden (o use **Run collection**). Las peticiones guardan los identificadores que necesitan las siguientes, por lo que conviene usar una base de datos de desarrollo.
+## Limitaciones Conocidas y Notas Técnicas
 
-Resultado de la última ejecución con Newman: 42 verificaciones, 41 correctas. La que falla es la petición marcada `[Error conocido]`, que espera el comportamiento correcto.
-
-## Errores conocidos (pendientes de corregir)
-
-1. `apps/inventario/serializers.py`: `MovimientoSerializer` define `read_only_fields = fields` con `fields = "__all__"`, por lo que serializar un movimiento lanza error. Afecta a `POST /movimientos/registrar-salida/` y a `GET /movimientos/` cuando hay movimientos. Ninguna de las 15 pruebas automatizadas ejerce ese camino.
-2. `config/settings.py` importa el backend de MySQL de forma incondicional (primeras líneas). Sin `mysqlclient` instalado el proyecto no arranca aunque se use PostgreSQL o SQLite.
-3. El archivo `.env` incluido usa `DB_ENGINE=mysql`, mientras que este README describe PostgreSQL. Debe definirse el motor final de la entrega.
-4. Dos listados muestran la advertencia `UnorderedObjectListWarning` (`Existencia` y `Producto` sin orden por defecto).
-
+1. **Recepción de Órdenes:** Las órdenes de compra se reciben únicamente de forma completa (`cantidad_recibida = cantidad`). La recepción parcial no está habilitada.
+2. **Edición de Conteos CERRADOS:** Una vez que un conteo de inventario se marca como `cerrado`, sus líneas de detalle quedan bloqueadas contra cualquier edición posterior.
+3. **Índice Raíz de Routers (`/api/v1/`):** Al usar múltiples `DefaultRouter` bajo el mismo prefijo raíz, la vista navegable predeterminada de DRF puede ocultar algunos índices del router. Los endpoints directos operan de manera totalmente independiente y normal.
+4. **Instalación de MySQL:** El archivo `settings.py` incluye soporte para adaptadores de MySQL. En entornos donde no se requiera dicho motor, asegúrese de tener configuradas correctamente las dependencias del sistema operativo o utilizar el motor por defecto SQLite/PostgreSQL.
