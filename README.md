@@ -135,7 +135,7 @@ El sistema implementa seguridad basada en roles mediante `TokenAuthentication` y
 
 ## Endpoints Principales
 
-Todos los endpoints requieren la cabecera `Authorization: Token <token>` (excepto salud y obtención de token).
+Todos los endpoints requieren la cabecera `Authorization: 31b28e755fa5032cfc59e602dfad2b6c35f28e6a` (excepto salud y obtención de token).
 
 ### Autenticación y Salud
 - `POST /api/v1/auth/token/`: Obtención de token con `username` y `password`.
