@@ -44,8 +44,8 @@ python manage.py crear_roles
 python manage.py runserver
 ```
 
-API de comprobación: `GET http://127.0.0.1:8000/api/v1/health/`  
-Token: `POST http://127.0.0.1:8000/api/v1/auth/token/` con `username` y `password`.
+API de comprobación: `GET http://127.0.0.1:8000/api/health/`  
+Token: `POST http://127.0.0.1:8000/api/token/` con `username` y `password`.
 
 Todos los demás endpoints requieren el encabezado `Authorization: Token <token>`. Los perfiles son `Administrador` (lectura, escritura y borrado), `Operador` (lectura y escritura) y `Consulta` (solo lectura). Asigna uno de esos grupos a cada usuario desde el panel de administración.
 
@@ -59,11 +59,11 @@ Todos los demás endpoints requieren el encabezado `Authorization: Token <token>
 
 Acciones del proceso:
 
-- `POST /api/v1/ordenes-compra/{id}/enviar/`
-- `POST /api/v1/ordenes-compra/{id}/recibir/` con `{"almacen": 1}`
-- `POST /api/v1/movimientos/registrar-salida/` con `almacen`, `producto`, `cantidad` y `referencia`
-- `GET /api/v1/existencias/bajo-minimo/`
-- `POST /api/v1/conteos/{id}/cerrar/`
+- `POST /api/ordenes-compra/{id}/enviar/`
+- `POST /api/ordenes-compra/{id}/recibir/` con `{"almacen": 1}`
+- `POST /api/movimientos/registrar-salida/` con `almacen`, `producto`, `cantidad` y `referencia`
+- `GET /api/existencias/bajo-minimo/`
+- `POST /api/conteos/{id}/cerrar/`
 
 Las existencias y los movimientos se consultan mediante API; el saldo se actualiza al recibir compras, registrar salidas y cerrar conteos, para mantener el historial consistente.
 
@@ -75,7 +75,7 @@ Copie `.env.example` como `.env`, configure una base PostgreSQL y complete sus v
 
 | Requisito | Estado |
 |---|---|
-| Autenticación por tokens | Hecho (`POST /api/v1/auth/token/`, pruebas en `apps/common/tests/`). |
+| Autenticación por tokens | Hecho (`POST /api/token/`, pruebas en `apps/common/tests/`). |
 | Roles y permisos (Administrador, Operador, Consulta) | Hecho (`config/permissions.py`, comando `crear_roles`, matriz de permisos probada en todos los módulos). |
 | Dos módulos de negocio | Hecho: se implementaron cinco (catálogo, proveedores, compras, inventario y conteos). |
 | Pruebas automatizadas (CRUD, reglas de negocio, permisos) | Hecho: 15 pruebas, todas correctas. |

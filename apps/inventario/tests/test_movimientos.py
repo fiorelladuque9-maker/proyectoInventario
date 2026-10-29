@@ -26,7 +26,7 @@ class InventarioAPITests(APITestCase):
     # Una salida válida resta unidades y registra quién hizo el movimiento.
     def test_salida_disminuye_existencia_y_crea_movimiento(self):
         response = self.client.post(
-            "/api/v1/movimientos/registrar-salida/",
+            "/api/movimientos/registrar-salida/",
             {"almacen": self.almacen.pk, "producto": self.producto.pk, "cantidad": "2", "referencia": "Uso interno"},
             format="json",
         )
@@ -38,7 +38,7 @@ class InventarioAPITests(APITestCase):
     # Si no alcanza el saldo, la API rechaza la salida sin cambiar nada.
     def test_salida_mayor_al_stock_se_rechaza(self):
         response = self.client.post(
-            "/api/v1/movimientos/registrar-salida/",
+            "/api/movimientos/registrar-salida/",
             {"almacen": self.almacen.pk, "producto": self.producto.pk, "cantidad": "4"},
             format="json",
         )
@@ -49,7 +49,7 @@ class InventarioAPITests(APITestCase):
 
     # La consulta especial encuentra productos cuyo saldo es menor al mínimo.
     def test_existencias_bajo_minimo_filtra_producto(self):
-        response = self.client.get("/api/v1/existencias/bajo-minimo/")
+        response = self.client.get("/api/existencias/bajo-minimo/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["producto_sku"], "INS-001")

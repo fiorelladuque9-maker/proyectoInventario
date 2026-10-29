@@ -122,7 +122,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/auth/token/",
+              "raw": "{{base_url}}/api/token/",
               "host": [
                 "{{base_url}}"
               ],
@@ -174,7 +174,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/auth/token/",
+              "raw": "{{base_url}}/api/token/",
               "host": [
                 "{{base_url}}"
               ],
@@ -226,7 +226,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/auth/token/",
+              "raw": "{{base_url}}/api/token/",
               "host": [
                 "{{base_url}}"
               ],
@@ -276,7 +276,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/auth/token/",
+              "raw": "{{base_url}}/api/token/",
               "host": [
                 "{{base_url}}"
               ],
@@ -319,7 +319,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/productos/",
+              "raw": "{{base_url}}/api/catalogo/productos/",
               "host": [
                 "{{base_url}}"
               ],
@@ -373,7 +373,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/categorias/",
+              "raw": "{{base_url}}/api/catalogo/categorias/",
               "host": [
                 "{{base_url}}"
               ],
@@ -419,7 +419,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/productos/",
+              "raw": "{{base_url}}/api/catalogo/productos/",
               "host": [
                 "{{base_url}}"
               ],
@@ -464,7 +464,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/productos/{{producto_id}}/",
+              "raw": "{{base_url}}/api/catalogo/productos/{{producto_id}}/",
               "host": [
                 "{{base_url}}"
               ],
@@ -509,7 +509,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/productos/",
+              "raw": "{{base_url}}/api/catalogo/productos/",
               "host": [
                 "{{base_url}}"
               ],
@@ -560,7 +560,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/proveedores/",
+              "raw": "{{base_url}}/api/proveedores/proveedores/",
               "host": [
                 "{{base_url}}"
               ],
@@ -605,7 +605,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/productos-proveedor/",
+              "raw": "{{base_url}}/api/proveedores/productos-proveedor/",
               "host": [
                 "{{base_url}}"
               ],
@@ -649,7 +649,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/productos-proveedor/",
+              "raw": "{{base_url}}/api/proveedores/productos-proveedor/",
               "host": [
                 "{{base_url}}"
               ],
@@ -700,7 +700,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/almacenes/",
+              "raw": "{{base_url}}/api/inventario/almacenes/",
               "host": [
                 "{{base_url}}"
               ],
@@ -752,7 +752,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/ordenes-compra/",
+              "raw": "{{base_url}}/api/compras/ordenes-compra/",
               "host": [
                 "{{base_url}}"
               ],
@@ -791,7 +791,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/ordenes-compra/{{orden_id}}/enviar/",
+              "raw": "{{base_url}}/api/compras/ordenes-compra/{{orden_id}}/enviar/",
               "host": [
                 "{{base_url}}"
               ],
@@ -829,7 +829,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/lineas-compra/",
+              "raw": "{{base_url}}/api/compras/lineas-compra/",
               "host": [
                 "{{base_url}}"
               ],
@@ -869,7 +869,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/ordenes-compra/{{orden_id}}/enviar/",
+              "raw": "{{base_url}}/api/compras/ordenes-compra/{{orden_id}}/enviar/",
               "host": [
                 "{{base_url}}"
               ],
@@ -907,7 +907,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/ordenes-compra/{{orden_id}}/recibir/",
+              "raw": "{{base_url}}/api/compras/ordenes-compra/{{orden_id}}/recibir/",
               "host": [
                 "{{base_url}}"
               ],
@@ -953,7 +953,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/ordenes-compra/{{orden_id}}/recibir/",
+              "raw": "{{base_url}}/api/compras/ordenes-compra/{{orden_id}}/recibir/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1001,7 +1001,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/existencias/?almacen={{almacen_id}}",
+              "raw": "{{base_url}}/api/inventario/existencias/?almacen={{almacen_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -1042,7 +1042,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/movimientos/registrar-salida/",
+              "raw": "{{base_url}}/api/inventario/movimientos/registrar-salida/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1087,7 +1087,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/movimientos/registrar-salida/",
+              "raw": "{{base_url}}/api/inventario/movimientos/registrar-salida/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1141,7 +1141,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/conteos/",
+              "raw": "{{base_url}}/api/conteos/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1187,7 +1187,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/lineas-conteo/",
+              "raw": "{{base_url}}/api/conteos/lineas-conteo/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1227,7 +1227,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/conteos/{{conteo_id}}/cerrar/",
+              "raw": "{{base_url}}/api/conteos/{{conteo_id}}/cerrar/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1259,7 +1259,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/conteos/{{conteo_id}}/cerrar/",
+              "raw": "{{base_url}}/api/conteos/{{conteo_id}}/cerrar/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1302,7 +1302,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/categorias/",
+              "raw": "{{base_url}}/api/catalogo/categorias/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1367,7 +1367,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/proveedores/",
+              "raw": "{{base_url}}/api/proveedores/proveedores/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1426,7 +1426,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/proveedores/{{proveedor_temp_id}}/",
+              "raw": "{{base_url}}/api/proveedores/proveedores/{{proveedor_temp_id}}/",
               "host": [
                 "{{base_url}}"
               ],
@@ -1477,7 +1477,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/proveedores/{{proveedor_temp_id}}/",
+              "raw": "{{base_url}}/api/proveedores/proveedores/{{proveedor_temp_id}}/",
               "host": [
                 "{{base_url}}"
               ],
