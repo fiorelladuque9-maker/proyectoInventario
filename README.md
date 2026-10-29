@@ -1,96 +1,5 @@
 # API Backend de Gestión de Inventario y Abastecimiento
-# API Backend de Gestión de Inventario y Abastecimiento
 
-API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)** para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén.
-
----
-
-## Tabla de Contenidos
-
-- [Visión General](#visión-general)
-- [Arquitectura de Módulos](#arquitectura-de-módulos)
-- [Requisitos Previos](#requisitos-previos)
-- [Instalación y Configuración](#instalación-y-configuración)
-- [Mapeo de Roles y Permisos](#mapeo-de-roles-y-permisos)
-- [Endpoints Principales](#endpoints-principales)
-- [Pruebas Automatizadas](#pruebas-automatizadas)
-- [Colección de Postman](#colección-de-postman)
-- [Limitaciones Conocidas y Notas Técnicas](#limitaciones-conocidas-y-notas-técnicas)
-
----
-
-## Visión General
-
-El sistema atiende la necesidad operativa de una pequeña o mediana organización para llevar el control de stock en tiempo real. Permite:
-- Mantener un catálogo de productos estructurado por categorías.
-- Registrar proveedores y gestionar catálogos de ofertas/costos de productos.
-- Crear, enviar y recibir órdenes de compra que alimentan automáticamente el inventario.
-- Controlar existencias físicas por almacén y registrar movimientos de auditoría (entradas/salidas).
-- Efectuar conteos físicos periódicos para conciliar las existencias del sistema contra la realidad en almacén.
-
----
-
-## Arquitectura de Módulos
-
-El proyecto está segmentado en **5 módulos de negocio** y **1 de soporte**:
-
-1. **`apps.catalogo`**: Control de categorías, productos, SKU, unidades de medida y stock mínimo.
-2. **`apps.proveedores`**: Gestión de proveedores y ofertas comerciales (relación N:M entre producto y proveedor con precios de referencia).
-3. **`apps.compras`**: Órdenes de compra y sus líneas de detalle. Gestiona el flujo `borrador` $\rightarrow$ `enviada` $\rightarrow$ `recibida`.
-4. **`apps.inventario`**: Administración de almacenes, saldos (`Existencia`) y registro histórico de auditoría (`Movimiento`).
-5. **`apps.conteos`**: Auditoría y toma de inventario físico por almacén; concilia diferencias y ajusta automáticamente las existencias.
-6. **`apps.common`**: Módulo transversal de soporte (no expone modelos); incluye utilidades, clases de permisos y el comando de inicialización de roles.
-
----
-
-## Requisitos Previos
-
-- **Python 3.10+**
-- **Virtualenv / venv**
-- Base de datos relacional: **SQLite** (por defecto para desarrollo local) o **PostgreSQL** / **MySQL**.
-- Git
-
----
-
-## Instalación y Configuración
-
-Sigue estos pasos para desplegar el entorno de desarrollo desde una instalación limpia:
-
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/fiorelladuque9-maker/proyectoInventario.git
-cd proyectoInventario
-```
-
-### 2. Crear y activar el entorno virtual
-En Linux/macOS:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-En Windows:
-```cmd
-python -m venv venv
-venv\Scripts\activate
-```
-
-### 3. Instalar dependencias
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 4. Configurar variables de entorno
-Copia la plantilla de variables de entorno y ajusta los valores según tu configuración local:
-```bash
-cp .env.example .env
-```
-
-> **Nota:** Por defecto, si no se define `DB_ENGINE`, el proyecto utilizará SQLite (`db.sqlite3`). Para PostgreSQL o MySQL, actualiza las variables `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`.
-
-### 5. Ejecutar migraciones de base de datos
-```bash
 API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)** para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén.
 
 ---
@@ -192,21 +101,7 @@ python manage.py crear_roles
 
 ### 7. Crear Superusuario (Administrador del Sistema)
 ```bash
-```
-
-### 6. Inicializar Roles y Perfiles
-Ejecuta el comando personalizado e idempotente para crear los grupos de seguridad obligatorios (`Administrador`, `Operador`, `Consulta`):
-```bash
-python manage.py crear_roles
-```
-
-### 7. Crear Superusuario (Administrador del Sistema)
-```bash
 python manage.py createsuperuser
-```
-
-### 8. Iniciar el servidor de desarrollo
-```bash
 ```
 
 ### 8. Iniciar el servidor de desarrollo
@@ -268,11 +163,30 @@ Todos los endpoints requieren la cabecera `Authorization: Token <token>` (except
 
 ---
 
+## Reglas de negocio y validaciones
+
+Las validaciones de entrada devuelven errores JSON con código `400`. Las reglas principales son:
+
+1. No se puede crear una orden para un proveedor inactivo.
+2. La cantidad de una línea de compra debe ser mayor que cero.
+3. El costo unitario de una línea y el costo referencial de una oferta no pueden ser negativos.
+4. La cantidad recibida no puede superar la cantidad solicitada.
+5. El producto de una línea de compra debe estar asociado al proveedor de la orden.
+6. Solo se puede enviar una orden en borrador que tenga al menos una línea.
+7. Solo se puede recibir una orden enviada y en un almacén activo; la recepción es completa y no se repite.
+8. Las órdenes recibidas o canceladas y sus líneas no se pueden reabrir ni modificar.
+9. Una salida requiere un producto y un almacén activos, una cantidad positiva y saldo suficiente.
+10. Un conteo solo se puede cerrar una vez y cuando todas sus líneas tengan cantidad contada; sus líneas quedan bloqueadas al cerrarlo.
+11. La cantidad contada no puede ser negativa y el producto de una línea de conteo no se puede cambiar después de crearla.
+
+Estas reglas se prueban principalmente en `apps/compras/tests/`, `apps/inventario/tests/`, `apps/conteos/tests/` y `apps/catalogo/tests/`.
+
+Las existencias y los movimientos son de solo lectura en el CRUD general para conservar un historial confiable. Se modifican mediante las acciones controladas de recepción de compras, registro de salidas y cierre de conteos.
+
 ## Pruebas Automatizadas
 
 Para ejecutar el paquete completo de pruebas unitarias e integración:
 
-```bash
 ```bash
 python manage.py test
 ```
@@ -286,25 +200,15 @@ La suite incluye pruebas sobre:
 - Filtros, búsqueda y paginación en listados.
 
 ---
-### Cobertura de Pruebas
-La suite incluye pruebas sobre:
-- Autenticación por token y comprobación de permisos (HTTP 401 y 403) para los tres roles.
-- Validación de reglas de negocio en compras (envío de órdenes vacías, recepción duplicada).
-- Integridad en movimientos de inventario y rechazo de salidas sin saldo suficiente.
-- Captura de fotografía de saldo al crear líneas de conteo y conciliación al cerrar.
-- Filtros, búsqueda y paginación en listados.
-
----
 
 ## Colección de Postman
 
-El repositorio incluye en la raíz el archivo exportado de la colección y su entorno para pruebas de integración:
-- **Colección:** `Postman_Collection.json`
-- **Entorno:** `Postman_Environment.json`
+La colección y el entorno para pruebas de integración están en `postman/`:
 
-Permite probar más de 20 peticiones documentadas, incluyendo flujos de error esperados (`400`, `401`, `403`, `404`).
+- Colección: `postman/inventario.postman_collection.json`
+- Entorno: `postman/inventario-local.postman_environment.json`
 
----
+Importa ambos archivos en Postman y selecciona **Inventario - Local**. La variable `base_url` apunta a `http://127.0.0.1:8000`. La colección documenta peticiones para los endpoints `/api/v1/` de este README.
 
 ## Limitaciones Conocidas y Notas Técnicas
 
