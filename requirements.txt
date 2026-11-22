@@ -4,3 +4,4 @@ django-filter==26.2
 psycopg[binary]==3.3.6
 mysqlclient==2.3.0
 python-dotenv==1.2.4
+django-cors-headers==4.9.0
