@@ -97,11 +97,11 @@ Se ejecutaron de forma automatizada con un navegador real (Chrome headless) cont
 | 1 | Login con credenciales incorrectas | Mensaje «Usuario o contraseña incorrectos» | `login.png` |
 | 2 | Abrir `/catalogo` sin sesión | Redirige a `/login` | — |
 | 3 | Login `admin_demo` | Dashboard con indicadores reales y rol visible | `dashboard.png` |
-| 4 | Navegación entre módulos sin recargar la página | La URL y el contenido cambian (SPA) | `productos.png` |
+| 4 | Navegación entre módulos sin recargar la página | La URL y el contenido cambian (SPA) | `productos.png`, `proveedores.png` |
 | 5 | Buscar «arroz» en productos | Solo productos coincidentes (búsqueda del servidor) | `productos.png` |
 | 6 | Filtros combinados (categoría + activo) y orden | Resultados del servidor, con botón «Limpiar» | `productos.png` |
 | 7 | Crear producto con SKU repetido | Error 400 legible: «Sku: …» | `error-validacion.png` |
-| 8 | Crear, editar (valores precargados) y eliminar producto | Alertas de éxito y tabla actualizada | `productos.png` |
+| 8 | Crear, editar (valores precargados) y eliminar producto | Alertas de éxito y tabla actualizada | `productos.png`, `formulario.png` |
 | 9 | Eliminar categoría con productos | Error 409 legible | `error-409.png` |
 | 10 | Crear orden, enviarla sin líneas | Regla de negocio: «Agregue al menos un producto…» | `compra-detalle.png` |
 | 11 | Agregar línea (solo productos del proveedor), enviar y recibir en un almacén | Estado `recibida`, inventario actualizado, líneas bloqueadas | `compra-detalle.png` |
@@ -112,7 +112,7 @@ Se ejecutaron de forma automatizada con un navegador real (Chrome headless) cont
 | 16 | `operador_demo` abre el catálogo | Puede editar; no ve eliminar | — |
 | 17 | Token inválido/revocado | 401 → vuelve al login con aviso de sesión expirada | `sesion-expirada.png` |
 | 18 | Logout | Se limpia el token local y redirige a `/login` | — |
-| 19 | Vista móvil (390 px) | Sin desbordamiento horizontal; menú desplazable | `movil.png` |
+| 19 | Vista móvil (390 px) | Sin desbordamiento horizontal; menú desplazable | — |
 
 ## 6. Limitaciones
 
