@@ -77,3 +77,9 @@ class LineaCompraViewSet(ModelViewSet):
     filterset_fields = ["orden", "producto"]
     search_fields = ["producto__sku", "producto__nombre"]
     ordering_fields = ["cantidad", "costo_unitario"]
+
+    # Las líneas de una orden recibida o cancelada tampoco se pueden eliminar.
+    def perform_destroy(self, instance):
+        if instance.orden.estado in {OrdenCompra.Estado.RECIBIDA, OrdenCompra.Estado.CANCELADA}:
+            raise ValidationError("No se pueden modificar las líneas de una orden cerrada.")
+        instance.delete()

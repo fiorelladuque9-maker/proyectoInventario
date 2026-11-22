@@ -1,11 +1,54 @@
-# API Backend de Gestión de Inventario y Abastecimiento
+# Sistema de Gestión de Inventario y Abastecimiento
 
-API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)** para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén.
+Aplicación de dos capas para la gestión centralizada de inventario, catálogo de productos, proveedores, órdenes de compra y conteos físicos de almacén:
+
+- **Backend** (Proyecto 1): API REST con **Python**, **Django** y **Django REST Framework (DRF)** — en la raíz de este repositorio (`apps/`, `config/`, `manage.py`).
+- **Frontend** (Proyecto 2): SPA con **React + Vite + Bootstrap 5** que consume esa API — carpeta [`frontend/`](frontend/).
+
+![Dashboard](docs/capturas/dashboard.png)
+
+## Inicio rápido
+
+Requisitos: **Python 3.10+**, **Node.js 20+** y **MySQL** (con una base de datos vacía llamada `inventario`). Abra **dos terminales** en la raíz del proyecto.
+
+**Terminal 1 — Backend** (Windows; en Linux/macOS active con `source .venv/bin/activate`):
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+Edite `.env` y escriba su `DB_USER` y `DB_PASSWORD` de MySQL. Luego:
+```bash
+python manage.py migrate
+python manage.py cargar_demo
+python manage.py runserver
+```
+
+**Terminal 2 — Frontend**:
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Abra **http://localhost:5173** e ingrese con un usuario de prueba (ficticios, creados por `cargar_demo`):
+
+| Usuario | Contraseña | Perfil | Puede |
+| :--- | :--- | :--- | :--- |
+| `admin_demo` | `Admin12345!` | Administrador | Todo, incluido eliminar |
+| `operador_demo` | `Operador12345!` | Operador | Consultar, crear, editar y ejecutar acciones; no eliminar |
+| `consulta_demo` | `Consulta12345!` | Consulta | Solo consultar |
+
+> `cargar_demo` es idempotente: crea los roles, los tres usuarios y datos de ejemplo (categorías, productos, proveedores, ofertas, almacenes, existencias, órdenes y un conteo abierto). El `.env.example` viene configurado para MySQL. Si no tiene MySQL, cambie en su `.env` la línea `DB_ENGINE=mysql` por `DB_ENGINE=sqlite` y el backend usará SQLite sin más configuración. En PowerShell, copie el `.env` con `Copy-Item .env.example .env`.
 
 ---
 
 ## Tabla de Contenidos
 
+- [Inicio rápido](#inicio-rápido)
+- [Frontend React](#frontend-react)
 - [Visión General](#visión-general)
 - [Arquitectura de Módulos](#arquitectura-de-módulos)
 - [Requisitos Previos](#requisitos-previos)
@@ -15,6 +58,57 @@ API REST desarrollada con **Python**, **Django** y **Django REST Framework (DRF)
 - [Pruebas Automatizadas](#pruebas-automatizadas)
 - [Colección de Postman](#colección-de-postman)
 - [Limitaciones Conocidas y Notas Técnicas](#limitaciones-conocidas-y-notas-técnicas)
+
+---
+
+## Frontend React
+
+SPA en `frontend/` que reutiliza el backend de este repositorio. Su estructura, estilo visual (barra lateral oscura, tarjetas con sombra, tablas Bootstrap) y patrones (`AuthContext`, rutas protegidas, cliente Axios centralizado, servicios por recurso) siguen el frontend de referencia `arena-game-frontend`.
+
+### Tecnologías
+React 19 (componentes funcionales y hooks), Vite, React Router, Axios, Bootstrap 5 y Bootstrap Icons.
+
+### Configuración
+- `frontend/.env.example` define `VITE_API_URL` (por defecto `http://127.0.0.1:8000/api/v1`). Cópielo a `frontend/.env`; no contiene secretos.
+- **CORS**: el backend autoriza los orígenes de `CORS_ALLOWED_ORIGINS` (por defecto `http://localhost:5173,http://127.0.0.1:5173`; se puede cambiar agregando esa variable al `.env`). Si cambia el puerto o dominio del frontend, actualice esa variable y reinicie Django.
+- Otros comandos: `npm run build` (compilación de producción) y `npm run lint`.
+
+### Pantallas y funcionalidades
+
+| Módulo | Contenido | CRUD |
+| :--- | :--- | :--- |
+| Dashboard | 6 indicadores en tiempo real, alertas de stock bajo, últimos movimientos y accesos | — |
+| Catálogo | Productos y categorías | Completo |
+| Proveedores | Proveedores y ofertas proveedor-producto (N:M con costo) | Completo |
+| Compras | Órdenes, detalle con líneas, **enviar** y **recibir** (actualiza inventario) | Completo |
+| Inventario | Existencias (con filtro «bajo mínimo»), historial de movimientos, **registrar salida**, almacenes | Almacenes completo; existencias y movimientos son solo lectura por diseño |
+| Conteos | Conteos, detalle con líneas, **cerrar** (genera ajustes) | Completo |
+
+- **Búsqueda, filtros combinables, ordenamiento y paginación** se envían al backend (`search`, filtros, `ordering`, `page`); no hay filtrado local.
+- **Formularios controlados** con selectores de relaciones consultados a la API, validación previa y valores precargados al editar.
+- **Errores**: mensajes comprensibles para 400 (campo por campo), 401 (sesión expirada → login), 403, 404, 409 y fallos de red; confirmación antes de eliminar y avisos de éxito.
+- **Permisos**: el perfil se consulta a `GET /api/v1/auth/me/` y se ocultan las acciones no permitidas, pero la autorización real sigue en Django (la API devuelve 403 aunque se manipule la interfaz).
+- **Diseño adaptable**: barra lateral en escritorio, menú desplazable en móvil, tablas con scroll interno.
+
+### Autenticación y cierre de sesión
+Login con `POST /api/v1/auth/token/`; el token se guarda en `sessionStorage` y se adjunta como `Authorization: Token …`. Al cerrar sesión se llama a `POST /api/v1/auth/logout/`, que **revoca (elimina) el token en el servidor**, y se limpia la sesión local. Si el servidor responde 401 en cualquier momento, el frontend cierra la sesión y vuelve al login.
+
+### Ampliaciones realizadas al backend
+CORS (`django-cors-headers`), `GET auth/me/`, `POST auth/logout/`, respuesta **409** al borrar registros con relaciones protegidas y bloqueo del borrado de líneas de órdenes y conteos cerrados. El detalle y la justificación están en [`docs/frontend-integracion.md`](docs/frontend-integracion.md), que además incluye la **matriz de pantallas y endpoints**, la **matriz de perfiles/permisos** y **19 escenarios manuales** con capturas (`docs/capturas/`).
+
+### Estructura de `frontend/src`
+```
+api/client.js    URL base, interceptores (token y 401) y traducción de errores HTTP
+auth/            AuthContext (login, logout, perfil) y ProtectedRoute
+services/        Un servicio por recurso (crud.js genérico + acciones de negocio)
+hooks/           useList (paginación, filtros, orden) y useOpciones (selectores)
+components/      Layout, PanelRecurso, FormEntidad, Paginacion, Alerta, Modal, Tabs
+pages/           Una página por módulo; paneles por entidad en subcarpetas
+```
+
+### Verificación realizada
+- `python manage.py test` (backend, incluidas las pruebas nuevas), `npm run build` y `npm run lint` sin errores.
+- Recorrido de extremo a extremo con navegador real (Chrome headless) contra la API real: login/logout, rutas protegidas, CRUD, búsqueda y filtros, reglas de negocio, flujos enviar/recibir y cerrar conteo, 401/403/409, los tres perfiles y vista móvil.
 
 ---
 
@@ -60,18 +154,19 @@ Sigue estos pasos para desplegar el entorno de desarrollo desde una instalación
 git clone https://github.com/fiorelladuque9-maker/proyectoInventario.git
 cd proyectoInventario
 ```
+> Todos los comandos de esta sección se ejecutan en la raíz del repositorio.
 
 ### 2. Crear y activar el entorno virtual
 En Linux/macOS:
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 En Windows:
 ```cmd
-python -m venv venv
-venv\Scripts\activate
+python -m venv .venv
+.venv\Scripts\activate
 ```
 
 ### 3. Instalar dependencias
@@ -86,7 +181,7 @@ Copia la plantilla de variables de entorno y ajusta los valores según tu config
 cp .env.example .env
 ```
 
-> **Nota:** Por defecto, si no se define `DB_ENGINE`, el proyecto utilizará SQLite (`db.sqlite3`). Para PostgreSQL o MySQL, actualiza las variables `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`.
+> **Nota:** La plantilla `.env.example` está configurada para MySQL (cree antes una base de datos vacía llamada `inventario`). Si no se define `DB_ENGINE`, el proyecto utiliza SQLite (`db.sqlite3`). Para PostgreSQL o MySQL, actualiza las variables `DB_ENGINE`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` y `DB_PORT`.
 
 ### 5. Ejecutar migraciones de base de datos
 ```bash
@@ -99,12 +194,17 @@ Ejecuta el comando personalizado e idempotente para crear los grupos de segurida
 python manage.py crear_roles
 ```
 
-### 7. Crear Superusuario (Administrador del Sistema)
+### 7. (Opcional) Cargar usuarios y datos de ejemplo
+```bash
+python manage.py cargar_demo
+```
+
+### 8. Crear Superusuario (Administrador del Sistema)
 ```bash
 python manage.py createsuperuser
 ```
 
-### 8. Iniciar el servidor de desarrollo
+### 9. Iniciar el servidor de desarrollo
 ```bash
 python manage.py runserver
 ```
@@ -139,6 +239,8 @@ Todos los endpoints requieren la cabecera `Authorization: Token <token>` (except
 
 ### Autenticación y Salud
 - `POST /api/v1/auth/token/`: Obtención de token con `username` y `password`.
+- `GET /api/v1/auth/me/`: Perfil del usuario autenticado (`rol`, `puede_escribir`, `puede_eliminar`).
+- `POST /api/v1/auth/logout/`: Revoca (elimina) el token del usuario autenticado.
 - `GET /api/v1/health/`: Estado de salud del servicio (público).
 
 ### Módulos CRUD
@@ -179,7 +281,7 @@ Las validaciones de entrada devuelven errores JSON con código `400`. Las reglas
 10. Un conteo solo se puede cerrar una vez y cuando todas sus líneas tengan cantidad contada; sus líneas quedan bloqueadas al cerrarlo.
 11. La cantidad contada no puede ser negativa y el producto de una línea de conteo no se puede cambiar después de crearla.
 
-Estas reglas se prueban principalmente en `apps/compras/tests/`, `apps/inventario/tests/`, `apps/conteos/tests/` y `apps/catalogo/tests/`.
+Estas reglas se prueban principalmente en `apps/*/tests/`.
 
 Las existencias y los movimientos son de solo lectura en el CRUD general para conservar un historial confiable. Se modifican mediante las acciones controladas de recepción de compras, registro de salidas y cierre de conteos.
 
@@ -194,6 +296,7 @@ python manage.py test
 ### Cobertura de Pruebas
 La suite incluye pruebas sobre:
 - Autenticación por token y comprobación de permisos (HTTP 401 y 403) para los tres roles.
+- Endpoints añadidos para el frontend: perfil (`auth/me`), revocación de token, CORS, 409 en borrados protegidos y bloqueo del borrado de líneas cerradas.
 - Validación de reglas de negocio en compras (envío de órdenes vacías, recepción duplicada).
 - Integridad en movimientos de inventario y rechazo de salidas sin saldo suficiente.
 - Captura de fotografía de saldo al crear líneas de conteo y conciliación al cerrar.
