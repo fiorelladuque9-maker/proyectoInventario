@@ -64,3 +64,9 @@ class LineaConteoViewSet(ModelViewSet):
     filterset_fields = ["conteo", "producto"]
     search_fields = ["producto__sku", "producto__nombre"]
     ordering_fields = ["cantidad_sistema", "cantidad_contada"]
+
+    # Las líneas de un conteo cerrado quedan bloqueadas también contra el borrado.
+    def perform_destroy(self, instance):
+        if instance.conteo.estado != ConteoInventario.Estado.ABIERTO:
+            raise ValidationError("No se pueden editar las líneas de un conteo cerrado.")
+        instance.delete()

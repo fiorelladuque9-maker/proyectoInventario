@@ -1,0 +1,193 @@
+/* Estilos propios de la aplicación (se cargan después de Bootstrap)
+   Secciones: base · login · botones y pestañas · estructura general ·
+   menú lateral · barra superior · tarjetas · formularios · modal · responsive*/
+
+
+/*Base */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
+
+
+/* Pantalla de login*/
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #111c35, #315caa);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  border-radius: 20px;
+}
+
+.brand-icon {
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+  border-radius: 18px;
+  background: #e9f0ff;
+  color: #2754b7;
+  font-size: 35px;
+}
+
+
+/*Botones y pestañas (colores de Bootstrap personalizados)*/
+.btn-primary {
+  background: #315dd5;
+  border-color: #315dd5;
+}
+
+.btn-primary:hover,
+.btn-primary:active {
+  background: #284bb0 !important;
+  border-color: #284bb0 !important;
+}
+
+.btn-outline-primary {
+  color: #315dd5;
+  border-color: #315dd5;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary.active {
+  background: #315dd5;
+  border-color: #315dd5;
+}
+
+.nav-tabs .nav-link {
+  color: #4a5575;
+}
+
+.nav-tabs .nav-link.active {
+  color: #315dd5;
+  font-weight: 600;
+}
+
+
+/*Estructura general de la aplicación*/
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f7fb;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+}
+
+
+/*Menú lateral (oculto en móvil; se muestra desde 768px) */
+.app-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #111c35;
+  color: #fff;
+  padding: 20px 14px;
+  display: none;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.sidebar-label {
+  font-size: .7rem;
+  letter-spacing: .08em;
+  color: #8b9ac0;
+}
+
+.sidebar-link {
+  color: #cfd8f0;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background: #315dd5;
+  color: #fff;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  font-size: .75rem;
+  color: #8b9ac0;
+}
+
+
+/* Barra superior y menú móvil */
+.app-topbar {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e3e8f3;
+}
+
+.mobile-links {
+  overflow-x: auto;
+}
+
+.mobile-links .btn.active {
+  background: #315dd5;
+  color: #fff;
+}
+
+
+/* Tarjetas de indicadores (dashboard) */
+.stat-card {
+  transition: transform .15s, box-shadow .15s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 .5rem 1rem rgba(17, 28, 53, .12) !important;
+}
+
+.stat-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-size: 1.1rem;
+}
+
+
+/* Barra de búsqueda y filtros de las tablas */
+.toolbar .form-select,
+.toolbar .form-control {
+  min-width: 0;
+}
+
+
+/* Ventana modal (el fondo oscuro lo aporta .modal-backdrop de Bootstrap) */
+.modal {
+  background: rgba(0, 0, 0, 0);
+}
+
+
+/*  Responsive: desde 768px se muestra el menú lateral */
+@media (min-width: 768px) {
+  .app-sidebar {
+    display: flex;
+  }
+}
